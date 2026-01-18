@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Global Relief Fund | Web3 Charity</title>
+<link rel="icon" href="data:,">
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.net.min.js"></script>
+
+<style>
+:root {
+    --bg-deep: #050816;
+    --glass-dark: rgba(15,23,42,0.7);
+    --glass-border: rgba(255,255,255,0.15);
+    --neon-cyan: #22d3ee;
+    --neon-purple: #a855f7;
+    --neon-green: #22c55e;
+    --danger-red: #ef4444;
+    --text-main: #e5e7eb;
+    --text-muted: #94a3b8;
+}
+
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: 'Inter', 'Segoe UI', sans-serif;
+    background: black;
+    color: var(--text-main);
+}
+
+#vanta-bg {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+}
+
+/* NAVIGATION / HEADER */
+nav {
+    display: flex;
+    justify-content: flex-end;
+    padding: 20px 5%;
+    position: fixed;
+    top: 0;
+    width: 100%;
+    z-index: 10;
+}
+
+.btn-connect {
+    padding: 12px 24px;
+    border-radius: 12px;
+    border: 1px solid var(--neon-cyan);
+    background: rgba(34, 211, 238, 0.1);
+    color: var(--neon-cyan);
+    font-weight: 700;
+    cursor: pointer;
+    transition: 0.3s;
+    backdrop-filter: blur(10px);
+}
+
+.btn-connect:hover {
+    background: var(--neon-cyan);
+    color: #020617;
+    box-shadow: 0 0 20px var(--neon-cyan);
+}
+
+/* MAIN CONTAINER */
+.flex-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 80px 0;
+}
+
+.container {
+    background: linear-gradient(135deg, rgba(15,23,42,0.9), rgba(15,23,42,0.6));
+    backdrop-filter: blur(18px);
+    padding: 50px;
+    border-radius: 28px;
+    border: 1px solid var(--glass-border);
+    max-width: 960px;
+    width: 92%;
+    box-shadow: 0 0 80px rgba(168,85,247,0.25), 0 0 140px rgba(34,211,238,0.15);
+}
+
+h1 {
+    text-align: center;
+    font-size: 3rem;
+    letter-spacing: 2px;
+    margin: 0 0 10px;
+    font-weight: 900;
+    text-transform: uppercase;
+    background: linear-gradient(90deg, var(--neon-cyan), var(--neon-purple));
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.progress-container {
+    height: 16px;
+    border-radius: 50px;
+    background: rgba(255,255,255,0.1);
+    overflow: hidden;
+    margin: 30px 0 10px;
+}
+.progress-bar {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, var(--neon-cyan), var(--neon-green));
+    box-shadow: 0 0 20px var(--neon-cyan);
+    transition: width 1s ease;
+}
+
+.total-raised-text {
+    text-align: center;
+    font-weight: 600;
+    color: var(--text-muted);
+}
+.highlight {
+    color: var(--neon-cyan);
+    font-size: 1.7rem;
+    font-weight: 800;
+}
+
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 22px;
+    margin-top: 40px;
+}
+
+.panel {
+    background: var(--glass-dark);
+    padding: 25px;
+    border-radius: 18px;
+    border: 1px solid var(--glass-border);
+    transition: all 0.3s ease;
+}
+
+h3 {
+    margin: 0 0 15px;
+    font-size: 0.8rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--neon-purple);
+}
+
+input[type="number"] {
+    width: 100%;
+    padding: 15px;
+    background: rgba(0,0,0,0.4);
+    border-radius: 14px;
+    border: 1px solid var(--glass-border);
+    color: var(--text-main);
+    font-size: 1.1rem;
+}
+
+.btn-main {
+    width: 100%;
+    margin-top: 14px;
+    padding: 15px;
+    border-radius: 14px;
+    border: none;
+    cursor: pointer;
+    font-weight: 800;
+    background: linear-gradient(90deg, var(--neon-cyan), var(--neon-purple));
+    color: #020617;
+    transition: 0.25s;
+}
+.btn-main:hover { transform: scale(1.02); opacity: 0.9; }
+
+.donation-list { list-style: none; padding: 0; max-height: 180px; overflow-y: auto; }
+.donation-list li { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.08); font-size: 0.85rem; }
+
+.verified-badge { font-size: 2.5rem; color: var(--neon-green); text-shadow: 0 0 15px var(--neon-green); text-align: center;}
+.address-box { margin-top: 10px; padding: 10px; background: rgba(0,0,0,0.4); border-radius: 10px; font-family: monospace; font-size: 0.75rem; word-break: break-all; border: 1px solid var(--glass-border); text-align: center;}
+
+#status { margin-top: 25px; text-align: center; font-weight: 700; color: var(--text-muted); }
+
+.admin-section { margin-top: 40px; padding-top: 20px; border-top: 1px dashed rgba(255,255,255,0.15); text-align: center; }
+.btn-withdraw { background: linear-gradient(90deg, #ef4444, #991b1b); color: white; box-shadow: 0 0 20px rgba(239,68,68,0.4); }
+</style>
+</head>
+
+<body>
+
+<div id="vanta-bg"></div>
+
+<nav>
+    <button class="btn-connect" id="connectBtn" onclick="connectWallet()">Connect Wallet</button>
+</nav>
+
+<div class="flex-wrapper">
+    <div class="container">
+        <h1>Global Relief Fund</h1>
+
+        <div class="progress-container">
+            <div id="progressBar" class="progress-bar"></div>
+        </div>
+
+        <div class="total-raised-text">
+            TOTAL CONTRIBUTIONS:
+            <span id="totalRaisedText" class="highlight">0.0 ETH</span>
+        </div>
+
+        <div class="dashboard-grid">
+            <div class="panel">
+                <h3>Recent Donors</h3>
+                <ul class="donation-list" id="donationList">
+                    <li style="opacity:0.5;justify-content:center;">Connect wallet to view</li>
+                </ul>
+            </div>
+
+            <div class="panel">
+                <h3>Secure Donation</h3>
+                <input type="number" id="donationAmount" placeholder="Amount (ETH)" step="0.01">
+                <button class="btn-main" onclick="donateETH()">Donate Now</button>
+            </div>
+
+            <div class="panel">
+                <h3>Verified Charity</h3>
+                <div class="verified-badge">✓</div>
+                <div class="address-box" id="charityAddressDisplay">0x...</div>
+            </div>
+        </div>
+
+        <p id="status">Please connect your wallet to interact.</p>
+
+        <div class="admin-section">
+            <p style="font-size:0.65rem; letter-spacing:1px; color:var(--text-muted); margin-bottom: 10px;">RESTRICTED ACCESS</p>
+            <button class="btn-main btn-withdraw" onclick="withdrawFunds()">Withdraw Funds</button>
+        </div>
+    </div>
+</div>
+
+<script>
+/* VANTA BG */
+VANTA.NET({
+    el: "#vanta-bg",
+    mouseControls: true,
+    touchControls: true,
+    color: 0x22d3ee,
+    backgroundColor: 0x050816,
+    points: 12,
+    maxDistance: 20,
+    spacing: 18
+});
+
+/* BLOCKCHAIN LOGIC */
+const contractAddress = "0xb8A4b921B1fF383e284a046a88f1DF961BBF850A";
+const contractABI = [
+    {"inputs": [], "name": "donate", "outputs": [], "stateMutability": "payable", "type": "function"},
+    {"inputs": [], "name": "withdraw", "outputs": [], "stateMutability": "nonpayable", "type": "function"},
+    {"inputs": [], "name": "charityAddress", "outputs": [{"internalType": "address", "name": "", "type": "address"}], "stateMutability": "view", "type": "function"},
+    {"inputs": [], "name": "getDonations", "outputs": [{"components": [{"internalType": "address", "name": "donor", "type": "address"}, {"internalType": "uint256", "name": "amount", "type": "uint256"}, {"internalType": "uint256", "name": "timestamp", "type": "uint256"}], "internalType": "struct CharityTracker.Donation[]", "name": "", "type": "tuple[]"}], "stateMutability": "view", "type": "function"},
+    {"inputs": [], "name": "totalRaised", "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}], "stateMutability": "view", "type": "function"}
+];
+
+let provider, signer, contract;
+
+async function connectWallet() {
+    if (typeof window.ethereum !== 'undefined') {
+        try {
+            setStatus("Requesting Connection...", "#a855f7");
+            
+            provider = new ethers.providers.Web3Provider(window.ethereum);
+            await provider.send("eth_requestAccounts", []);
+            
+            signer = provider.getSigner();
+            const address = await signer.getAddress();
+            contract = new ethers.Contract(contractAddress, contractABI, signer);
+
+            // Update UI
+            document.getElementById("connectBtn").innerText = address.slice(0,6) + "..." + address.slice(-4);
+            setStatus("Wallet Connected", "#22c55e");
+            
+            loadData();
+        } catch (error) {
+            console.error(error);
+            setStatus("Connection Failed", "#ef4444");
+        }
+    } else {
+        alert("Please install MetaMask!");
+    }
+}
+
+function setStatus(text, color) {
+    const el = document.getElementById("status");
+    el.innerText = text;
+    el.style.color = color;
+}
+
+async function loadData() {
+    if (!contract) return;
+    try {
+        const totalWei = await contract.totalRaised();
+        const totalEth = ethers.utils.formatEther(totalWei);
+        document.getElementById("totalRaisedText").innerText = totalEth + " ETH";
+        
+        const progress = Math.min((parseFloat(totalEth) / 10) * 100, 100);
+        document.getElementById("progressBar").style.width = progress + "%";
+        
+        document.getElementById("charityAddressDisplay").innerText = await contract.charityAddress();
+        updateDonationList();
+    } catch (err) { console.error(err); }
+}
+
+async function updateDonationList() {
+    try {
+        const donations = await contract.getDonations();
+        const list = document.getElementById("donationList");
+        list.innerHTML = "";
+        donations.slice(-5).reverse().forEach(d => {
+            const li = document.createElement("li");
+            li.innerHTML = `<span>${d.donor.slice(0,6)}...${d.donor.slice(-4)}</span><span style="color:#22c55e;">+${ethers.utils.formatEther(d.amount)} ETH</span>`;
+            list.appendChild(li);
+        });
+    } catch (err) { console.error(err); }
+}
+
+async function donateETH() {
+    if(!contract) return alert("Connect wallet first!");
+    const amt = document.getElementById("donationAmount").value;
+    if (!amt || amt <= 0) return;
+    try {
+        setStatus("Confirm in Wallet...", "#a855f7");
+        const tx = await contract.donate({ value: ethers.utils.parseEther(amt) });
+        setStatus("Mining Transaction...", "#22d3ee");
+        await tx.wait();
+        setStatus("Donation Received! Thank you.", "#22c55e");
+        loadData();
+    } catch (err) { setStatus("Transaction Cancelled", "#ef4444"); }
+}
+
+async function withdrawFunds() {
+    if(!contract) return;
+    try {
+        const tx = await contract.withdraw();
+        await tx.wait();
+        loadData();
+    } catch (err) { setStatus("Admin Access Denied", "#ef4444"); }
+}
+</script>
+</body>
+</html>
